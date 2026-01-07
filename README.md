@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gun Range Lane Tracker
 
-## Getting Started
+A simple web application for tracking time limits on gun range lanes.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Add multiple lanes for tracking
+- Set custom time limits for each lane (in minutes)
+- Start/stop timers for each lane
+- Visual indicators for time status:
+  - Green border when active
+  - Orange border when time is running low (5 minutes or less)
+  - Red border and pulsing animation when time has expired
+- Reset timers to restart
+- Persistent storage - lanes and timers are saved in browser localStorage
+- Responsive design that works on desktop and mobile devices
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Usage
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Open `index.html` in a web browser
+2. Click "Add Lane" to create a new lane tracker
+3. Set the time limit (in minutes) for each lane
+4. Click "Start" to begin the timer
+5. Click "Stop" to pause the timer
+6. Click "Reset" to reset the timer back to the time limit
+7. Click "×" to remove a lane
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Files
 
-## Learn More
+- `index.html` - Main HTML structure
+- `styles.css` - Styling and layout
+- `script.js` - Timer logic and lane management
+- `README.md` - This file
 
-To learn more about Next.js, take a look at the following resources:
+## Browser Compatibility
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Works in all modern browsers that support:
+- ES6 JavaScript
+- CSS Grid
+- localStorage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+No external dependencies required - pure HTML, CSS, and JavaScript.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

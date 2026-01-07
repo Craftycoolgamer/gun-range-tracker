@@ -1,0 +1,320 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+header {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+header h1 {
+    font-size: 2rem;
+    color: #2d3748;
+    font-weight: 700;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+    background: #e53e3e;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #c53030;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(229, 62, 62, 0.3);
+}
+
+.btn-success {
+    background: #48bb78;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #38a169;
+}
+
+.btn-danger {
+    background: #f56565;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #e53e3e;
+}
+
+.lanes-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.lane-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.lane-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.lane-card.active {
+    border: 3px solid #48bb78;
+    box-shadow: 0 0 20px rgba(72, 187, 120, 0.3);
+}
+
+.lane-card.warning {
+    border: 3px solid #ed8936;
+    box-shadow: 0 0 20px rgba(237, 137, 54, 0.3);
+}
+
+.lane-card.expired {
+    border: 3px solid #e53e3e;
+    box-shadow: 0 0 20px rgba(229, 62, 62, 0.3);
+}
+
+.lane-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.lane-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+    user-select: none;
+}
+
+.lane-number:hover {
+    background-color: #f7fafc;
+}
+
+.lane-name-input {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    border: 2px solid #667eea;
+    border-radius: 6px;
+    padding: 4px 8px;
+    outline: none;
+    font-family: inherit;
+}
+
+.lane-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timer-display {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.time-remaining {
+    font-size: 3rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #2d3748;
+    margin-bottom: 10px;
+}
+
+.time-remaining.warning {
+    color: #ed8936;
+}
+
+.time-remaining.expired {
+    color: #e53e3e;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.status-text {
+    font-size: 0.875rem;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.lane-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.time-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.time-input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.time-input-label {
+    font-size: 0.875rem;
+    color: #4a5568;
+    font-weight: 600;
+}
+
+.add-time-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.add-time-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.add-time-input {
+    flex: 1;
+    max-width: 100px;
+}
+
+.quick-add-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.quick-add-buttons .btn-small {
+    min-width: 50px;
+}
+
+.lane-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.lane-buttons .btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 0.875rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state h2 {
+    color: #718096;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: #a0aec0;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .lanes-container {
+        grid-template-columns: 1fr;
+    }
+
+    .time-remaining {
+        font-size: 2.5rem;
+    }
+}
+
