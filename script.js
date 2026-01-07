@@ -240,12 +240,14 @@ class LaneTracker {
 
         navBar.style.display = 'flex';
 
-        // Sort lanes: expired first, then warning, then started lanes
+        // Sort lanes: expired first, then warning, then started, then not-started
         const sortedLanes = [...this.lanes].sort((a, b) => {
             const aExpired = this.isLaneExpired(a);
             const bExpired = this.isLaneExpired(b);
             const aWarning = this.isLaneWarning(a);
             const bWarning = this.isLaneWarning(b);
+            const aNotStarted = !a.isActive;
+            const bNotStarted = !b.isActive;
             
             // Expired lanes first
             if (aExpired && !bExpired) return -1;
@@ -253,9 +255,13 @@ class LaneTracker {
             
             // Warning lanes second (if both not expired)
             if (!aExpired && !bExpired) {
-                if (aWarning && !bWarning) return -1;
-                if (!aWarning && bWarning) return 1;
+                if (aWarning && !bWarning && !bNotStarted) return -1;
+                if (!aWarning && bWarning && !aNotStarted) return 1;
             }
+            
+            // Not-started lanes last
+            if (aNotStarted && !bNotStarted) return 1;
+            if (!aNotStarted && bNotStarted) return -1;
             
             // Maintain original order otherwise
             return 0;
@@ -268,12 +274,15 @@ class LaneTracker {
             lanesContainer.innerHTML = sortedLanes.map(lane => {
                 const isExpired = this.isLaneExpired(lane);
                 const isWarning = this.isLaneWarning(lane);
+                const isNotStarted = !lane.isActive;
                 let itemClass = 'nav-lane-item';
                 
                 if (isExpired) {
                     itemClass += ' nav-lane-item-expired';
                 } else if (isWarning) {
                     itemClass += ' nav-lane-item-warning';
+                } else if (isNotStarted) {
+                    itemClass += ' nav-lane-item-not-started';
                 } else {
                     itemClass += ' nav-lane-item-started';
                 }
@@ -432,21 +441,15 @@ class LaneTracker {
 
     startTimerLoop() {
         setInterval(() => {
-            let needsNavUpdate = false;
+            let hasActiveLanes = false;
             this.lanes.forEach(lane => {
                 if (lane.isActive) {
-                    const wasExpired = this.isLaneExpired(lane);
-                    const wasWarning = this.isLaneWarning(lane);
+                    hasActiveLanes = true;
                     this.updateLaneDisplay(lane);
-                    const isExpired = this.isLaneExpired(lane);
-                    const isWarning = this.isLaneWarning(lane);
-                    // Update navigation if expiration or warning status changed
-                    if (wasExpired !== isExpired || wasWarning !== isWarning) {
-                        needsNavUpdate = true;
-                    }
                 }
             });
-            if (needsNavUpdate) {
+            // Update navigation bar whenever there are active lanes to ensure accurate status
+            if (hasActiveLanes || this.lanes.some(lane => this.isLaneExpired(lane))) {
                 this.renderNavigationBar();
             }
         }, 1000); // Update every second

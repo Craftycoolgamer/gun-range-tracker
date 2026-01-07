@@ -127,6 +127,18 @@ header h1 {
     box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
 }
 
+.nav-lane-item-not-started {
+    background: #e2e8f0;
+    color: #4a5568;
+    border-color: #cbd5e0;
+}
+
+.nav-lane-item-not-started:hover {
+    background: #cbd5e0;
+    color: #2d3748;
+    box-shadow: 0 2px 8px rgba(203, 213, 224, 0.3);
+}
+
 .btn {
     padding: 12px 24px;
     border: none;
