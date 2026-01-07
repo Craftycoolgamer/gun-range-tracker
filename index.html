@@ -3,18 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gun Range Lane Tracker</title>
+    <title>ExpiLane</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Gun Range Lane Tracker</h1>
+            <div class="header-left">
+                <div id="headerLogo" class="header-logo" style="display: none;">
+                    <img id="logoImage" src="" alt="Logo" />
+                </div>
+                <h1 id="headerText">ExpiLane</h1>
+            </div>
             <div class="controls">
+                <button id="settingsBtn" class="btn btn-secondary" title="Settings">⚙️</button>
                 <button id="addLaneBtn" class="btn btn-primary">Add Lane</button>
                 <button id="clearAllBtn" class="btn btn-secondary">Clear All</button>
             </div>
         </header>
+
+        <!-- Lane Navigation Bar -->
+        <nav id="laneNavBar" class="lane-nav-bar">
+            <div class="nav-lanes" id="laneNavLanes"></div>
+        </nav>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Header Settings</h2>
+                    <button class="modal-close" id="closeSettingsBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label for="headerTextInput" class="setting-label">Header Text:</label>
+                        <input 
+                            type="text" 
+                            id="headerTextInput" 
+                            class="setting-input" 
+                            placeholder="Enter header text"
+                            maxlength="50"
+                        >
+                    </div>
+                    <div class="setting-group">
+                        <label for="logoFileInput" class="setting-label">Logo Image:</label>
+                        <input 
+                            type="file" 
+                            id="logoFileInput" 
+                            class="setting-input" 
+                            accept="image/*"
+                        >
+                        <div class="logo-preview-container">
+                            <div id="logoPreview" class="logo-preview" style="display: none;">
+                                <img id="logoPreviewImage" src="" alt="Logo preview" />
+                                <button id="removeLogoBtn" class="btn-small btn-danger">Remove Logo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveSettingsBtn" class="btn btn-primary">Save</button>
+                    <button id="cancelSettingsBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
 
         <div id="lanesContainer" class="lanes-container">
             <!-- Lanes will be dynamically added here -->

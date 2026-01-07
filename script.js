@@ -8,6 +8,8 @@ class LaneTracker {
 
     init() {
         this.loadLanes();
+        this.loadHeaderSettings();
+        this.renderLanes();
         this.setupEventListeners();
         this.startTimerLoop();
     }
@@ -15,6 +17,19 @@ class LaneTracker {
     setupEventListeners() {
         document.getElementById('addLaneBtn').addEventListener('click', () => this.addLane());
         document.getElementById('clearAllBtn').addEventListener('click', () => this.clearAll());
+        document.getElementById('settingsBtn').addEventListener('click', () => this.openSettings());
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => this.closeSettings());
+        document.getElementById('cancelSettingsBtn').addEventListener('click', () => this.closeSettings());
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
+        document.getElementById('logoFileInput').addEventListener('change', (e) => this.handleLogoUpload(e));
+        document.getElementById('removeLogoBtn').addEventListener('click', () => this.removeLogo());
+        
+        // Close modal when clicking outside
+        document.getElementById('settingsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'settingsModal') {
+                this.closeSettings();
+            }
+        });
     }
 
     addLane() {
@@ -182,6 +197,96 @@ class LaneTracker {
         return 'normal';
     }
 
+    isLaneExpired(lane) {
+        if (!lane.isActive || !lane.startTime) {
+            return false;
+        }
+        const remainingSeconds = this.calculateRemainingTime(lane);
+        return remainingSeconds === 0;
+    }
+
+    isLaneWarning(lane) {
+        if (!lane.isActive || !lane.startTime) {
+            return false;
+        }
+        const remainingSeconds = this.calculateRemainingTime(lane);
+        return remainingSeconds > 0 && remainingSeconds <= 300; // 5 minutes or less
+    }
+
+    scrollToLane(laneId) {
+        const laneCard = document.querySelector(`[data-lane-id="${laneId}"]`);
+        if (laneCard) {
+            laneCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add a highlight effect
+            laneCard.style.transition = 'box-shadow 0.3s ease';
+            laneCard.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.6)';
+            setTimeout(() => {
+                laneCard.style.boxShadow = '';
+            }, 2000);
+        }
+    }
+
+    renderNavigationBar() {
+        const navBar = document.getElementById('laneNavBar');
+        const lanesContainer = document.getElementById('laneNavLanes');
+        
+        if (!lanesContainer || !navBar) return;
+
+        // Hide navigation bar if there are no lanes
+        if (this.lanes.length === 0) {
+            navBar.style.display = 'none';
+            return;
+        }
+
+        navBar.style.display = 'flex';
+
+        // Sort lanes: expired first, then warning, then started lanes
+        const sortedLanes = [...this.lanes].sort((a, b) => {
+            const aExpired = this.isLaneExpired(a);
+            const bExpired = this.isLaneExpired(b);
+            const aWarning = this.isLaneWarning(a);
+            const bWarning = this.isLaneWarning(b);
+            
+            // Expired lanes first
+            if (aExpired && !bExpired) return -1;
+            if (!aExpired && bExpired) return 1;
+            
+            // Warning lanes second (if both not expired)
+            if (!aExpired && !bExpired) {
+                if (aWarning && !bWarning) return -1;
+                if (!aWarning && bWarning) return 1;
+            }
+            
+            // Maintain original order otherwise
+            return 0;
+        });
+
+        // Render all lanes in a single list
+        if (sortedLanes.length === 0) {
+            lanesContainer.innerHTML = '<span style="color: #a0aec0; font-style: italic;">No lanes</span>';
+        } else {
+            lanesContainer.innerHTML = sortedLanes.map(lane => {
+                const isExpired = this.isLaneExpired(lane);
+                const isWarning = this.isLaneWarning(lane);
+                let itemClass = 'nav-lane-item';
+                
+                if (isExpired) {
+                    itemClass += ' nav-lane-item-expired';
+                } else if (isWarning) {
+                    itemClass += ' nav-lane-item-warning';
+                } else {
+                    itemClass += ' nav-lane-item-started';
+                }
+                
+                return `
+                    <div class="${itemClass}" onclick="tracker.scrollToLane(${lane.id})">
+                        ${lane.name || `Lane ${lane.number}`}
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
     updateLaneDisplay(lane) {
         const card = document.querySelector(`[data-lane-id="${lane.id}"]`);
         if (!card) return;
@@ -214,12 +319,12 @@ class LaneTracker {
                 statusText.textContent = 'Active';
             }
             
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'block';
         } else {
             statusText.textContent = 'Not Started';
-            startBtn.disabled = false;
-            stopBtn.disabled = remainingSeconds === 0;
+            startBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
         }
     }
 
@@ -233,11 +338,12 @@ class LaneTracker {
                     <p>Click "Add Lane" to start tracking</p>
                 </div>
             `;
+            this.renderNavigationBar();
             return;
         }
 
         container.innerHTML = this.lanes.map(lane => `
-            <div class="lane-card" data-lane-id="${lane.id}">
+            <div class="lane-card" data-lane-id="${lane.id}" id="lane-${lane.id}">
                 <div class="lane-header">
                     <div 
                         class="lane-number" 
@@ -295,14 +401,14 @@ class LaneTracker {
                         <button 
                             class="btn btn-success start-btn" 
                             onclick="tracker.startLane(${lane.id})"
-                            ${lane.isActive ? 'disabled' : ''}
+                            style="display: ${lane.isActive ? 'none' : 'block'};"
                         >
                             Start
                         </button>
                         <button 
                             class="btn btn-danger stop-btn" 
                             onclick="tracker.stopLane(${lane.id})"
-                            ${!lane.isActive ? 'disabled' : ''}
+                            style="display: ${lane.isActive ? 'block' : 'none'};"
                         >
                             Stop
                         </button>
@@ -319,15 +425,30 @@ class LaneTracker {
 
         // Update all lane displays
         this.lanes.forEach(lane => this.updateLaneDisplay(lane));
+        
+        // Update navigation bar
+        this.renderNavigationBar();
     }
 
     startTimerLoop() {
         setInterval(() => {
+            let needsNavUpdate = false;
             this.lanes.forEach(lane => {
                 if (lane.isActive) {
+                    const wasExpired = this.isLaneExpired(lane);
+                    const wasWarning = this.isLaneWarning(lane);
                     this.updateLaneDisplay(lane);
+                    const isExpired = this.isLaneExpired(lane);
+                    const isWarning = this.isLaneWarning(lane);
+                    // Update navigation if expiration or warning status changed
+                    if (wasExpired !== isExpired || wasWarning !== isWarning) {
+                        needsNavUpdate = true;
+                    }
                 }
             });
+            if (needsNavUpdate) {
+                this.renderNavigationBar();
+            }
         }, 1000); // Update every second
     }
 
@@ -357,6 +478,98 @@ class LaneTracker {
         if (counter) {
             this.laneCounter = parseInt(counter);
         }
+    }
+
+    // Header Settings Functions
+    loadHeaderSettings() {
+        const headerText = localStorage.getItem('gunRangeHeaderText');
+        const logoDataUrl = localStorage.getItem('gunRangeLogo');
+        
+        if (headerText) {
+            document.getElementById('headerText').textContent = headerText;
+        }
+        
+        if (logoDataUrl) {
+            const logoImg = document.getElementById('logoImage');
+            logoImg.src = logoDataUrl;
+            document.getElementById('headerLogo').style.display = 'flex';
+        }
+    }
+
+    openSettings() {
+        const modal = document.getElementById('settingsModal');
+        const headerText = document.getElementById('headerText').textContent;
+        const logoDataUrl = localStorage.getItem('gunRangeLogo');
+        
+        document.getElementById('headerTextInput').value = headerText;
+        
+        const logoPreview = document.getElementById('logoPreview');
+        if (logoDataUrl) {
+            document.getElementById('logoPreviewImage').src = logoDataUrl;
+            logoPreview.style.display = 'flex';
+        } else {
+            logoPreview.style.display = 'none';
+        }
+        
+        modal.classList.add('show');
+    }
+
+    closeSettings() {
+        const modal = document.getElementById('settingsModal');
+        modal.classList.remove('show');
+        // Reset file input
+        document.getElementById('logoFileInput').value = '';
+    }
+
+    handleLogoUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file.');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const logoPreview = document.getElementById('logoPreview');
+            document.getElementById('logoPreviewImage').src = e.target.result;
+            logoPreview.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    removeLogo() {
+        document.getElementById('logoPreview').style.display = 'none';
+        document.getElementById('logoFileInput').value = '';
+        document.getElementById('logoPreviewImage').src = '';
+    }
+
+    saveSettings() {
+        const headerText = document.getElementById('headerTextInput').value.trim();
+        const logoPreview = document.getElementById('logoPreviewImage');
+        
+        // Save header text
+        if (headerText) {
+            localStorage.setItem('gunRangeHeaderText', headerText);
+            document.getElementById('headerText').textContent = headerText;
+        } else {
+            localStorage.removeItem('gunRangeHeaderText');
+            document.getElementById('headerText').textContent = 'ExpiLane';
+        }
+        
+        // Save logo
+        if (logoPreview.src && logoPreview.src !== window.location.href) {
+            localStorage.setItem('gunRangeLogo', logoPreview.src);
+            const logoImg = document.getElementById('logoImage');
+            logoImg.src = logoPreview.src;
+            document.getElementById('headerLogo').style.display = 'flex';
+        } else {
+            localStorage.removeItem('gunRangeLogo');
+            document.getElementById('headerLogo').style.display = 'none';
+        }
+        
+        this.closeSettings();
     }
 }
 
