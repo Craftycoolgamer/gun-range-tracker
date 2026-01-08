@@ -767,7 +767,7 @@ class LaneTracker {
             document.getElementById('headerText').textContent = headerText;
         } else {
             localStorage.removeItem('gunRangeHeaderText');
-            document.getElementById('headerText').textContent = 'ExpiLane';
+            document.getElementById('headerText').textContent = 'Lane Tracker';
         }
         
         // Save logo
