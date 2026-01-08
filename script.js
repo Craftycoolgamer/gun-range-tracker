@@ -15,7 +15,7 @@ class LaneTracker {
     }
 
     setupEventListeners() {
-        document.getElementById('addLaneBtn').addEventListener('click', () => this.addLane());
+        document.getElementById('configureLanesBtn').addEventListener('click', () => this.openLaneConfig());
         document.getElementById('clearAllBtn').addEventListener('click', () => this.clearAll());
         document.getElementById('settingsBtn').addEventListener('click', () => this.openSettings());
         document.getElementById('closeSettingsBtn').addEventListener('click', () => this.closeSettings());
@@ -24,27 +24,171 @@ class LaneTracker {
         document.getElementById('logoFileInput').addEventListener('change', (e) => this.handleLogoUpload(e));
         document.getElementById('removeLogoBtn').addEventListener('click', () => this.removeLogo());
         
-        // Close modal when clicking outside
+        // Lane configuration modal
+        document.getElementById('closeLaneConfigBtn').addEventListener('click', () => this.closeLaneConfig());
+        document.getElementById('cancelLaneConfigBtn').addEventListener('click', () => this.closeLaneConfig());
+        document.getElementById('saveLaneConfigBtn').addEventListener('click', () => this.saveLaneConfig());
+        document.getElementById('laneCountInput').addEventListener('input', (e) => this.updateLaneNameInputs(e.target.value));
+        
+        // Close modals when clicking outside
         document.getElementById('settingsModal').addEventListener('click', (e) => {
             if (e.target.id === 'settingsModal') {
                 this.closeSettings();
             }
         });
+        document.getElementById('laneConfigModal').addEventListener('click', (e) => {
+            if (e.target.id === 'laneConfigModal') {
+                this.closeLaneConfig();
+            }
+        });
     }
 
-    addLane() {
-        this.laneCounter++;
-        const lane = {
-            id: Date.now(),
-            number: this.laneCounter,
-            name: `Lane ${this.laneCounter}`,
-            timeLimit: 30, // default 30 minutes
-            startTime: null,
-            isActive: false
+    openLaneConfig() {
+        const modal = document.getElementById('laneConfigModal');
+        const laneCountInput = document.getElementById('laneCountInput');
+        const currentLaneCount = this.lanes.length;
+        
+        laneCountInput.value = currentLaneCount || 1;
+        this.updateLaneNameInputs(laneCountInput.value);
+        
+        modal.classList.add('show');
+    }
+
+    closeLaneConfig() {
+        const modal = document.getElementById('laneConfigModal');
+        modal.classList.remove('show');
+    }
+
+    updateLaneNameInputs(count) {
+        const container = document.getElementById('laneNamesContainer');
+        const laneCount = Math.max(1, Math.min(50, parseInt(count) || 1));
+        
+        container.innerHTML = '';
+        
+        for (let i = 1; i <= laneCount; i++) {
+            const existingLane = this.lanes[i - 1];
+            const defaultName = existingLane ? existingLane.name : `Lane ${i}`;
+            
+            const card = document.createElement('div');
+            card.className = 'lane-config-card';
+            card.dataset.laneIndex = i - 1;
+            card.innerHTML = `
+                <div class="lane-config-card-content" onclick="tracker.startEditingLaneConfigName(${i - 1})">
+                    <span class="lane-config-name" data-lane-index="${i - 1}">${defaultName}</span>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+    }
+
+    startEditingLaneConfigName(laneIndex) {
+        const card = document.querySelector(`.lane-config-card[data-lane-index="${laneIndex}"]`);
+        if (!card) return;
+
+        // Check if already editing
+        const existingInput = card.querySelector('.lane-config-name-input');
+        if (existingInput) {
+            existingInput.focus();
+            return;
+        }
+
+        const nameElement = card.querySelector('.lane-config-name');
+        if (!nameElement) return;
+        
+        const currentName = nameElement.textContent;
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'lane-config-name-input';
+        input.value = currentName;
+        input.dataset.laneIndex = laneIndex;
+        
+        const finishEdit = () => {
+            const newName = input.value.trim() || `Lane ${parseInt(laneIndex) + 1}`;
+            nameElement.textContent = newName;
+            nameElement.style.display = 'block';
+            input.remove();
         };
-        this.lanes.push(lane);
+
+        input.addEventListener('blur', finishEdit);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                finishEdit();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                nameElement.style.display = 'block';
+                input.remove();
+            }
+        });
+
+        // Prevent card click from firing when clicking input
+        input.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        nameElement.style.display = 'none';
+        nameElement.parentElement.appendChild(input);
+        input.focus();
+        input.select();
+    }
+
+    saveLaneConfig() {
+        const laneCountInput = document.getElementById('laneCountInput');
+        const laneNameElements = document.querySelectorAll('.lane-config-name');
+        const newLaneCount = Math.max(1, Math.min(50, parseInt(laneCountInput.value) || 1));
+        
+        // Get all lane names from cards
+        const laneNames = Array.from(laneNameElements).map((element, index) => {
+            const name = element.textContent.trim();
+            return name || `Lane ${index + 1}`;
+        });
+        
+        // Store existing lanes data for preservation
+        const existingLanesMap = new Map();
+        this.lanes.forEach(lane => {
+            existingLanesMap.set(lane.number, lane);
+        });
+        
+        // Clear timers for lanes that will be removed
+        const newLaneNumbers = new Set();
+        for (let i = 1; i <= newLaneCount; i++) {
+            newLaneNumbers.add(i);
+        }
+        this.lanes.forEach(lane => {
+            if (!newLaneNumbers.has(lane.number)) {
+                this.timers.delete(lane.id);
+            }
+        });
+        
+        // Create/update lanes
+        const newLanes = [];
+        for (let i = 1; i <= newLaneCount; i++) {
+            const existingLane = existingLanesMap.get(i);
+            if (existingLane) {
+                // Preserve existing lane data, just update the name
+                existingLane.name = laneNames[i - 1] || `Lane ${i}`;
+                newLanes.push(existingLane);
+            } else {
+                // Create new lane
+                this.laneCounter = Math.max(this.laneCounter, i);
+                const lane = {
+                    id: Date.now() + i, // Ensure unique IDs
+                    number: i,
+                    name: laneNames[i - 1] || `Lane ${i}`,
+                    timeLimit: 30, // default 30 minutes
+                    startTime: null,
+                    isActive: false,
+                    remainingTime: null // stores remaining time in seconds when stopped
+                };
+                newLanes.push(lane);
+            }
+        }
+        
+        this.lanes = newLanes;
         this.saveLanes();
         this.renderLanes();
+        this.closeLaneConfig();
     }
 
     removeLane(laneId) {
@@ -57,7 +201,15 @@ class LaneTracker {
     startLane(laneId) {
         const lane = this.lanes.find(l => l.id === laneId);
         if (lane) {
-            lane.startTime = Date.now();
+            // If there's a preserved remaining time, use it to adjust the start time
+            if (lane.remainingTime !== null && lane.remainingTime > 0) {
+                // Calculate what the startTime should be to show the remaining time
+                const targetRemainingSeconds = lane.remainingTime;
+                lane.startTime = Date.now() - ((lane.timeLimit * 60 - targetRemainingSeconds) * 1000);
+                lane.remainingTime = null; // Clear preserved time
+            } else {
+                lane.startTime = Date.now();
+            }
             lane.isActive = true;
             this.saveLanes();
             this.renderLanes();
@@ -67,6 +219,11 @@ class LaneTracker {
     stopLane(laneId) {
         const lane = this.lanes.find(l => l.id === laneId);
         if (lane) {
+            // Calculate and preserve remaining time before stopping
+            if (lane.isActive && lane.startTime) {
+                const remainingSeconds = this.calculateRemainingTime(lane);
+                lane.remainingTime = Math.max(0, remainingSeconds);
+            }
             lane.startTime = null;
             lane.isActive = false;
             this.saveLanes();
@@ -79,6 +236,7 @@ class LaneTracker {
         if (lane) {
             lane.startTime = null;
             lane.isActive = false;
+            lane.remainingTime = null; // Clear preserved time on reset
             this.saveLanes();
             this.renderLanes();
         }
@@ -152,12 +310,40 @@ class LaneTracker {
         if (minutesToAdd === 0) return;
 
         if (lane.isActive && lane.startTime) {
-            // If timer is active, adjust startTime backwards to add time
-            const secondsToAdd = minutesToAdd * 60;
-            lane.startTime = lane.startTime - (secondsToAdd * 1000);
-        } else {
-            // If timer is not active, add to time limit
+            // If timer is active, increase the time limit to add time
             lane.timeLimit = Math.min(999, lane.timeLimit + minutesToAdd);
+        } else {
+            // If timer is not active, add to preserved remaining time or time limit
+            const secondsToAdd = minutesToAdd * 60;
+            if (lane.remainingTime !== null) {
+                lane.remainingTime = Math.min(999 * 60, lane.remainingTime + secondsToAdd);
+            } else {
+                lane.timeLimit = Math.min(999, lane.timeLimit + minutesToAdd);
+            }
+        }
+
+        this.saveLanes();
+        this.renderLanes();
+    }
+
+    subtractTimeFromLane(laneId, minutes) {
+        const lane = this.lanes.find(l => l.id === laneId);
+        if (!lane) return;
+
+        const minutesToSubtract = Math.max(0, parseInt(minutes) || 0);
+        if (minutesToSubtract === 0) return;
+
+        if (lane.isActive && lane.startTime) {
+            // If timer is active, decrease the time limit to subtract time
+            lane.timeLimit = Math.max(1, lane.timeLimit - minutesToSubtract);
+        } else {
+            // If timer is not active, subtract from preserved remaining time or time limit
+            const secondsToSubtract = minutesToSubtract * 60;
+            if (lane.remainingTime !== null) {
+                lane.remainingTime = Math.max(0, lane.remainingTime - secondsToSubtract);
+            } else {
+                lane.timeLimit = Math.max(1, lane.timeLimit - minutesToSubtract);
+            }
         }
 
         this.saveLanes();
@@ -165,10 +351,13 @@ class LaneTracker {
     }
 
     clearAll() {
-        if (confirm('Are you sure you want to clear all lanes?')) {
-            this.lanes = [];
+        if (confirm('Are you sure you want to reset all timers?')) {
+            this.lanes.forEach(lane => {
+                lane.startTime = null;
+                lane.isActive = false;
+                lane.remainingTime = null; // Clear preserved time
+            });
             this.timers.clear();
-            this.laneCounter = 0;
             this.saveLanes();
             this.renderLanes();
         }
@@ -176,6 +365,10 @@ class LaneTracker {
 
     calculateRemainingTime(lane) {
         if (!lane.isActive || !lane.startTime) {
+            // If there's a preserved remaining time, use it; otherwise use timeLimit
+            if (lane.remainingTime !== null) {
+                return lane.remainingTime;
+            }
             return lane.timeLimit * 60; // return in seconds
         }
 
@@ -213,6 +406,10 @@ class LaneTracker {
         return remainingSeconds > 0 && remainingSeconds <= 300; // 5 minutes or less
     }
 
+    isLanePaused(lane) {
+        return !lane.isActive && lane.remainingTime !== null && lane.remainingTime > 0;
+    }
+
     scrollToLane(laneId) {
         const laneCard = document.querySelector(`[data-lane-id="${laneId}"]`);
         if (laneCard) {
@@ -240,14 +437,16 @@ class LaneTracker {
 
         navBar.style.display = 'flex';
 
-        // Sort lanes: expired first, then warning, then started, then not-started
+        // Sort lanes: expired first, then warning, then started, then paused, then not-started
         const sortedLanes = [...this.lanes].sort((a, b) => {
             const aExpired = this.isLaneExpired(a);
             const bExpired = this.isLaneExpired(b);
             const aWarning = this.isLaneWarning(a);
             const bWarning = this.isLaneWarning(b);
-            const aNotStarted = !a.isActive;
-            const bNotStarted = !b.isActive;
+            const aPaused = this.isLanePaused(a);
+            const bPaused = this.isLanePaused(b);
+            const aNotStarted = !a.isActive && !aPaused;
+            const bNotStarted = !b.isActive && !bPaused;
             
             // Expired lanes first
             if (aExpired && !bExpired) return -1;
@@ -255,9 +454,13 @@ class LaneTracker {
             
             // Warning lanes second (if both not expired)
             if (!aExpired && !bExpired) {
-                if (aWarning && !bWarning && !bNotStarted) return -1;
-                if (!aWarning && bWarning && !aNotStarted) return 1;
+                if (aWarning && !bWarning && !bNotStarted && !bPaused) return -1;
+                if (!aWarning && bWarning && !aNotStarted && !aPaused) return 1;
             }
+            
+            // Paused lanes before not-started
+            if (aPaused && !bPaused && bNotStarted) return -1;
+            if (!aPaused && bPaused && aNotStarted) return 1;
             
             // Not-started lanes last
             if (aNotStarted && !bNotStarted) return 1;
@@ -274,13 +477,16 @@ class LaneTracker {
             lanesContainer.innerHTML = sortedLanes.map(lane => {
                 const isExpired = this.isLaneExpired(lane);
                 const isWarning = this.isLaneWarning(lane);
-                const isNotStarted = !lane.isActive;
+                const isPaused = this.isLanePaused(lane);
+                const isNotStarted = !lane.isActive && !isPaused;
                 let itemClass = 'nav-lane-item';
                 
                 if (isExpired) {
                     itemClass += ' nav-lane-item-expired';
                 } else if (isWarning) {
                     itemClass += ' nav-lane-item-warning';
+                } else if (isPaused) {
+                    itemClass += ' nav-lane-item-paused';
                 } else if (isNotStarted) {
                     itemClass += ' nav-lane-item-not-started';
                 } else {
@@ -331,7 +537,13 @@ class LaneTracker {
             startBtn.style.display = 'none';
             stopBtn.style.display = 'block';
         } else {
-            statusText.textContent = 'Not Started';
+            // Check if paused (has remainingTime) or not started
+            if (lane.remainingTime !== null && lane.remainingTime > 0) {
+                statusText.textContent = 'Paused';
+                card.classList.add('paused');
+            } else {
+                statusText.textContent = 'Not Started';
+            }
             startBtn.style.display = 'block';
             stopBtn.style.display = 'none';
         }
@@ -344,7 +556,7 @@ class LaneTracker {
             container.innerHTML = `
                 <div class="empty-state">
                     <h2>No Lanes Added</h2>
-                    <p>Click "Add Lane" to start tracking</p>
+                    <p>Click "Configure Lanes" to set up your lanes</p>
                 </div>
             `;
             this.renderNavigationBar();
@@ -354,18 +566,11 @@ class LaneTracker {
         container.innerHTML = this.lanes.map(lane => `
             <div class="lane-card" data-lane-id="${lane.id}" id="lane-${lane.id}">
                 <div class="lane-header">
-                    <div 
-                        class="lane-number" 
-                        onclick="tracker.startEditingLaneName(${lane.id})"
-                        title="Click to rename"
-                    >${lane.name || `Lane ${lane.number}`}</div>
-                    <div class="lane-actions">
-                        <button class="btn-small btn-danger" onclick="tracker.removeLane(${lane.id})">×</button>
-                    </div>
+                    <div class="lane-number">${lane.name || `Lane ${lane.number}`}</div>
                 </div>
                 <div class="timer-display">
                     <div class="time-remaining">${this.formatTime(this.calculateRemainingTime(lane))}</div>
-                    <div class="status-text">${lane.isActive ? 'Active' : 'Not Started'}</div>
+                    <div class="status-text">${lane.isActive ? 'Active' : (lane.remainingTime !== null && lane.remainingTime > 0 ? 'Paused' : 'Not Started')}</div>
                 </div>
                 <div class="lane-controls">
                     <div class="time-input-group">
@@ -474,6 +679,10 @@ class LaneTracker {
                 // Set default name if it doesn't exist (for backward compatibility)
                 if (!lane.name) {
                     lane.name = `Lane ${lane.number}`;
+                }
+                // Initialize remainingTime if it doesn't exist (for backward compatibility)
+                if (lane.remainingTime === undefined) {
+                    lane.remainingTime = null;
                 }
             });
         }

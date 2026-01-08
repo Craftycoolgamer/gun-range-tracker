@@ -17,7 +17,7 @@
             </div>
             <div class="controls">
                 <button id="settingsBtn" class="btn btn-secondary" title="Settings">⚙️</button>
-                <button id="addLaneBtn" class="btn btn-primary">Add Lane</button>
+                <button id="configureLanesBtn" class="btn btn-primary">Configure Lanes</button>
                 <button id="clearAllBtn" class="btn btn-secondary">Clear All</button>
             </div>
         </header>
@@ -64,6 +64,36 @@
                 <div class="modal-footer">
                     <button id="saveSettingsBtn" class="btn btn-primary">Save</button>
                     <button id="cancelSettingsBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lane Configuration Modal -->
+        <div id="laneConfigModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Configure Lanes</h2>
+                    <button class="modal-close" id="closeLaneConfigBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label for="laneCountInput" class="setting-label">Number of Lanes:</label>
+                        <input 
+                            type="number" 
+                            id="laneCountInput" 
+                            class="setting-input" 
+                            min="1" 
+                            max="50"
+                            value="1"
+                        >
+                    </div>
+                    <div id="laneNamesContainer" class="lane-names-container">
+                        <!-- Lane name inputs will be dynamically added here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveLaneConfigBtn" class="btn btn-primary">Save</button>
+                    <button id="cancelLaneConfigBtn" class="btn btn-secondary">Cancel</button>
                 </div>
             </div>
         </div>
