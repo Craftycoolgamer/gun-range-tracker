@@ -103,7 +103,7 @@ class LaneTracker {
 
     updateLaneNameInputs(count) {
         const container = document.getElementById('laneNamesContainer');
-        const laneCount = Math.max(1, Math.min(50, parseInt(count) || 1));
+        const laneCount = Math.max(1, Math.min(30, parseInt(count) || 1));
         
         container.innerHTML = '';
         
@@ -796,7 +796,7 @@ class LaneTracker {
         }
         
         // Save lane configuration
-        const newLaneCount = Math.max(1, Math.min(50, parseInt(laneCountInput.value) || 1));
+        const newLaneCount = Math.max(1, Math.min(30, parseInt(laneCountInput.value) || 1));
         const defaultLaneTime = Math.max(1, Math.min(999, parseInt(defaultLaneTimeInput.value) || 30));
         
         // Save default lane time to localStorage

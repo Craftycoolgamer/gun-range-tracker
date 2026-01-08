@@ -5,7 +5,7 @@ A comprehensive web application for tracking time limits on gun range lanes with
 ## Features
 
 ### Lane Management
-- **Configure Multiple Lanes**: Set up 1-50 lanes with custom names
+- **Configure Multiple Lanes**: Set up 1-30 lanes with custom names
 - **Custom Lane Names**: Edit lane names directly in the configuration or on the lane card
 - **Lane Navigation Bar**: Quick navigation to lanes sorted by status (expired → warning → active → paused → not started)
 - **Visual Status Indicators**:
@@ -40,7 +40,7 @@ A comprehensive web application for tracking time limits on gun range lanes with
 ### Initial Setup
 1. Open `index.html` in a web browser
 2. Click "Configure Lanes" to set up your lanes
-3. Enter the number of lanes (1-50)
+3. Enter the number of lanes (1-30)
 4. Customize lane names by clicking on them
 5. Click "Save" to create your lanes
 
@@ -106,5 +106,5 @@ Data persists across browser sessions and page refreshes.
 - **Timer Precision**: Updates every second for accurate time display
 - **Time Format**: Displays as MM:SS (minutes:seconds)
 - **Maximum Time Limit**: 999 minutes per lane
-- **Maximum Lanes**: 50 lanes
+- **Maximum Lanes**: 30 lanes
 - **Logo Format**: Any image format supported by the browser
