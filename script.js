@@ -15,49 +15,91 @@ class LaneTracker {
     }
 
     setupEventListeners() {
-        document.getElementById('configureLanesBtn').addEventListener('click', () => this.openLaneConfig());
         document.getElementById('clearAllBtn').addEventListener('click', () => this.clearAll());
+        document.getElementById('resetAllTimesBtn').addEventListener('click', () => this.resetAllTimes());
         document.getElementById('settingsBtn').addEventListener('click', () => this.openSettings());
         document.getElementById('closeSettingsBtn').addEventListener('click', () => this.closeSettings());
         document.getElementById('cancelSettingsBtn').addEventListener('click', () => this.closeSettings());
         document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
         document.getElementById('logoFileInput').addEventListener('change', (e) => this.handleLogoUpload(e));
         document.getElementById('removeLogoBtn').addEventListener('click', () => this.removeLogo());
-        
-        // Lane configuration modal
-        document.getElementById('closeLaneConfigBtn').addEventListener('click', () => this.closeLaneConfig());
-        document.getElementById('cancelLaneConfigBtn').addEventListener('click', () => this.closeLaneConfig());
-        document.getElementById('saveLaneConfigBtn').addEventListener('click', () => this.saveLaneConfig());
         document.getElementById('laneCountInput').addEventListener('input', (e) => this.updateLaneNameInputs(e.target.value));
         
-        // Close modals when clicking outside
+        // Close modal when clicking outside
         document.getElementById('settingsModal').addEventListener('click', (e) => {
             if (e.target.id === 'settingsModal') {
                 this.closeSettings();
             }
         });
-        document.getElementById('laneConfigModal').addEventListener('click', (e) => {
-            if (e.target.id === 'laneConfigModal') {
-                this.closeLaneConfig();
+        
+        // Setup section toggle listeners
+        this.setupSectionToggles();
+    }
+    
+    setupSectionToggles() {
+        const sectionTitles = document.querySelectorAll('.settings-section-title');
+        sectionTitles.forEach(title => {
+            // Check if listener already attached
+            if (title.dataset.listenerAttached === 'true') {
+                return;
+            }
+            
+            const section = title.closest('.settings-section');
+            const sectionKey = title.dataset.section;
+            
+            // Load saved state
+            const savedState = localStorage.getItem(`settingsSection_${sectionKey}`);
+            if (savedState === 'collapsed') {
+                section.classList.add('collapsed');
+            } else {
+                section.classList.remove('collapsed');
+            }
+            
+            // Mark as having listener attached
+            title.dataset.listenerAttached = 'true';
+            
+            // Toggle on click
+            title.addEventListener('click', (e) => {
+                // Don't toggle if clicking the button directly (it will bubble)
+                if (e.target.closest('.section-toggle-btn')) {
+                    e.stopPropagation();
+                }
+                this.toggleSection(sectionKey);
+            });
+        });
+    }
+    
+    restoreSectionStates() {
+        const sectionTitles = document.querySelectorAll('.settings-section-title');
+        sectionTitles.forEach(title => {
+            const section = title.closest('.settings-section');
+            const sectionKey = title.dataset.section;
+            
+            // Load saved state
+            const savedState = localStorage.getItem(`settingsSection_${sectionKey}`);
+            if (savedState === 'collapsed') {
+                section.classList.add('collapsed');
+            } else {
+                section.classList.remove('collapsed');
             }
         });
     }
-
-    openLaneConfig() {
-        const modal = document.getElementById('laneConfigModal');
-        const laneCountInput = document.getElementById('laneCountInput');
-        const currentLaneCount = this.lanes.length;
+    
+    toggleSection(sectionKey) {
+        const section = document.querySelector(`.settings-section-title[data-section="${sectionKey}"]`)?.closest('.settings-section');
+        if (!section) return;
         
-        laneCountInput.value = currentLaneCount || 1;
-        this.updateLaneNameInputs(laneCountInput.value);
+        const isCollapsed = section.classList.contains('collapsed');
         
-        modal.classList.add('show');
+        if (isCollapsed) {
+            section.classList.remove('collapsed');
+            localStorage.setItem(`settingsSection_${sectionKey}`, 'expanded');
+        } else {
+            section.classList.add('collapsed');
+            localStorage.setItem(`settingsSection_${sectionKey}`, 'collapsed');
+        }
     }
 
-    closeLaneConfig() {
-        const modal = document.getElementById('laneConfigModal');
-        modal.classList.remove('show');
-    }
 
     updateLaneNameInputs(count) {
         const container = document.getElementById('laneNamesContainer');
@@ -131,64 +173,6 @@ class LaneTracker {
         nameElement.parentElement.appendChild(input);
         input.focus();
         input.select();
-    }
-
-    saveLaneConfig() {
-        const laneCountInput = document.getElementById('laneCountInput');
-        const laneNameElements = document.querySelectorAll('.lane-config-name');
-        const newLaneCount = Math.max(1, Math.min(50, parseInt(laneCountInput.value) || 1));
-        
-        // Get all lane names from cards
-        const laneNames = Array.from(laneNameElements).map((element, index) => {
-            const name = element.textContent.trim();
-            return name || `Lane ${index + 1}`;
-        });
-        
-        // Store existing lanes data for preservation
-        const existingLanesMap = new Map();
-        this.lanes.forEach(lane => {
-            existingLanesMap.set(lane.number, lane);
-        });
-        
-        // Clear timers for lanes that will be removed
-        const newLaneNumbers = new Set();
-        for (let i = 1; i <= newLaneCount; i++) {
-            newLaneNumbers.add(i);
-        }
-        this.lanes.forEach(lane => {
-            if (!newLaneNumbers.has(lane.number)) {
-                this.timers.delete(lane.id);
-            }
-        });
-        
-        // Create/update lanes
-        const newLanes = [];
-        for (let i = 1; i <= newLaneCount; i++) {
-            const existingLane = existingLanesMap.get(i);
-            if (existingLane) {
-                // Preserve existing lane data, just update the name
-                existingLane.name = laneNames[i - 1] || `Lane ${i}`;
-                newLanes.push(existingLane);
-            } else {
-                // Create new lane
-                this.laneCounter = Math.max(this.laneCounter, i);
-                const lane = {
-                    id: Date.now() + i, // Ensure unique IDs
-                    number: i,
-                    name: laneNames[i - 1] || `Lane ${i}`,
-                    timeLimit: 30, // default 30 minutes
-                    startTime: null,
-                    isActive: false,
-                    remainingTime: null // stores remaining time in seconds when stopped
-                };
-                newLanes.push(lane);
-            }
-        }
-        
-        this.lanes = newLanes;
-        this.saveLanes();
-        this.renderLanes();
-        this.closeLaneConfig();
     }
 
     removeLane(laneId) {
@@ -348,6 +332,17 @@ class LaneTracker {
 
         this.saveLanes();
         this.renderLanes();
+    }
+
+    resetAllTimes() {
+        const defaultLaneTime = parseInt(localStorage.getItem('gunRangeDefaultLaneTime')) || 30;
+        if (confirm(`Are you sure you want to reset all lane times to ${defaultLaneTime} minutes?`)) {
+            this.lanes.forEach(lane => {
+                lane.timeLimit = defaultLaneTime;
+            });
+            this.saveLanes();
+            this.renderLanes();
+        }
     }
 
     clearAll() {
@@ -712,7 +707,11 @@ class LaneTracker {
         const modal = document.getElementById('settingsModal');
         const headerText = document.getElementById('headerText').textContent;
         const logoDataUrl = localStorage.getItem('gunRangeLogo');
+        const laneCountInput = document.getElementById('laneCountInput');
+        const defaultLaneTimeInput = document.getElementById('defaultLaneTimeInput');
+        const currentLaneCount = this.lanes.length;
         
+        // Load header settings
         document.getElementById('headerTextInput').value = headerText;
         
         const logoPreview = document.getElementById('logoPreview');
@@ -722,6 +721,18 @@ class LaneTracker {
         } else {
             logoPreview.style.display = 'none';
         }
+        
+        // Load lane configuration
+        laneCountInput.value = currentLaneCount || 1;
+        
+        // Load default lane time from localStorage or use 30 as default
+        const savedDefaultTime = localStorage.getItem('gunRangeDefaultLaneTime');
+        defaultLaneTimeInput.value = savedDefaultTime || 30;
+        
+        this.updateLaneNameInputs(laneCountInput.value);
+        
+        // Restore section states
+        this.restoreSectionStates();
         
         modal.classList.add('show');
     }
@@ -760,6 +771,9 @@ class LaneTracker {
     saveSettings() {
         const headerText = document.getElementById('headerTextInput').value.trim();
         const logoPreview = document.getElementById('logoPreviewImage');
+        const laneCountInput = document.getElementById('laneCountInput');
+        const defaultLaneTimeInput = document.getElementById('defaultLaneTimeInput');
+        const laneNameElements = document.querySelectorAll('.lane-config-name');
         
         // Save header text
         if (headerText) {
@@ -780,6 +794,64 @@ class LaneTracker {
             localStorage.removeItem('gunRangeLogo');
             document.getElementById('headerLogo').style.display = 'none';
         }
+        
+        // Save lane configuration
+        const newLaneCount = Math.max(1, Math.min(50, parseInt(laneCountInput.value) || 1));
+        const defaultLaneTime = Math.max(1, Math.min(999, parseInt(defaultLaneTimeInput.value) || 30));
+        
+        // Save default lane time to localStorage
+        localStorage.setItem('gunRangeDefaultLaneTime', defaultLaneTime.toString());
+        
+        // Get all lane names from cards
+        const laneNames = Array.from(laneNameElements).map((element, index) => {
+            const name = element.textContent.trim();
+            return name || `Lane ${index + 1}`;
+        });
+        
+        // Store existing lanes data for preservation
+        const existingLanesMap = new Map();
+        this.lanes.forEach(lane => {
+            existingLanesMap.set(lane.number, lane);
+        });
+        
+        // Clear timers for lanes that will be removed
+        const newLaneNumbers = new Set();
+        for (let i = 1; i <= newLaneCount; i++) {
+            newLaneNumbers.add(i);
+        }
+        this.lanes.forEach(lane => {
+            if (!newLaneNumbers.has(lane.number)) {
+                this.timers.delete(lane.id);
+            }
+        });
+        
+        // Create/update lanes
+        const newLanes = [];
+        for (let i = 1; i <= newLaneCount; i++) {
+            const existingLane = existingLanesMap.get(i);
+            if (existingLane) {
+                // Preserve existing lane data, just update the name
+                existingLane.name = laneNames[i - 1] || `Lane ${i}`;
+                newLanes.push(existingLane);
+            } else {
+                // Create new lane
+                this.laneCounter = Math.max(this.laneCounter, i);
+                const lane = {
+                    id: Date.now() + i, // Ensure unique IDs
+                    number: i,
+                    name: laneNames[i - 1] || `Lane ${i}`,
+                    timeLimit: defaultLaneTime, // use default lane time from input
+                    startTime: null,
+                    isActive: false,
+                    remainingTime: null // stores remaining time in seconds when stopped
+                };
+                newLanes.push(lane);
+            }
+        }
+        
+        this.lanes = newLanes;
+        this.saveLanes();
+        this.renderLanes();
         
         this.closeSettings();
     }

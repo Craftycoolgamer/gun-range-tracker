@@ -16,9 +16,9 @@
                 <h1 id="headerText">Lane Tracker</h1>
             </div>
             <div class="controls">
-                <button id="settingsBtn" class="btn btn-secondary" title="Settings">⚙️</button>
-                <button id="configureLanesBtn" class="btn btn-primary">Configure Lanes</button>
-                <button id="clearAllBtn" class="btn btn-secondary">Clear All</button>
+                <button id="settingsBtn" class="btn btn-primary">Configure</button>
+                <button id="resetAllTimesBtn" class="btn btn-secondary">Reset</button>
+                <button id="clearAllBtn" class="btn btn-secondary">Clear</button>
             </div>
         </header>
 
@@ -29,71 +29,91 @@
 
         <!-- Settings Modal -->
         <div id="settingsModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content settings-modal-content">
                 <div class="modal-header">
-                    <h2>Header Settings</h2>
+                    <h2>Configure</h2>
                     <button class="modal-close" id="closeSettingsBtn">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="setting-group">
-                        <label for="headerTextInput" class="setting-label">Header Text:</label>
-                        <input 
-                            type="text" 
-                            id="headerTextInput" 
-                            class="setting-input" 
-                            placeholder="Enter header text"
-                            maxlength="50"
-                        >
-                    </div>
-                    <div class="setting-group">
-                        <label for="logoFileInput" class="setting-label">Logo Image:</label>
-                        <input 
-                            type="file" 
-                            id="logoFileInput" 
-                            class="setting-input" 
-                            accept="image/*"
-                        >
-                        <div class="logo-preview-container">
-                            <div id="logoPreview" class="logo-preview" style="display: none;">
-                                <img id="logoPreviewImage" src="" alt="Logo preview" />
-                                <button id="removeLogoBtn" class="btn-small btn-danger">Remove Logo</button>
+                    <!-- Header Settings Section -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title" data-section="header">
+                            <span class="section-title-text">Header Settings</span>
+                            <button class="section-toggle-btn" aria-label="Toggle section">
+                                <span class="toggle-icon">▼</span>
+                            </button>
+                        </h3>
+                        <div class="settings-section-content header-settings-wrapper">
+                            <div class="header-settings-left">
+                                <div class="setting-group">
+                                    <label for="headerTextInput" class="setting-label">Header Text:</label>
+                                    <input 
+                                        type="text" 
+                                        id="headerTextInput" 
+                                        class="setting-input" 
+                                        placeholder="Enter header text"
+                                        maxlength="50"
+                                    >
+                                </div>
+                                <div class="setting-group">
+                                    <label for="logoFileInput" class="setting-label">Logo Image:</label>
+                                    <input 
+                                        type="file" 
+                                        id="logoFileInput" 
+                                        class="setting-input" 
+                                        accept="image/*"
+                                    >
+                                </div>
                             </div>
+                            <div class="logo-preview-container">
+                                <div id="logoPreview" class="logo-preview" style="display: none;">
+                                    <img id="logoPreviewImage" src="" alt="Logo preview" />
+                                    <button id="removeLogoBtn" class="btn-small btn-danger">Remove Logo</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lane Configuration Section -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title" data-section="lane">
+                            <span class="section-title-text">Lane Configuration</span>
+                            <button class="section-toggle-btn" aria-label="Toggle section">
+                                <span class="toggle-icon">▼</span>
+                            </button>
+                        </h3>
+                        <div class="settings-section-content">
+                        <div class="setting-group">
+                            <label for="laneCountInput" class="setting-label">Number of Lanes:</label>
+                            <input 
+                                type="number" 
+                                id="laneCountInput" 
+                                class="setting-input" 
+                                min="1" 
+                                max="50"
+                                value="1"
+                            >
+                        </div>
+                        <div class="setting-group">
+                            <label for="defaultLaneTimeInput" class="setting-label">Default Lane Time (minutes):</label>
+                            <input 
+                                type="number" 
+                                id="defaultLaneTimeInput" 
+                                class="setting-input" 
+                                min="1" 
+                                max="999"
+                                value="30"
+                            >
+                        </div>
+                        <div id="laneNamesContainer" class="lane-names-container">
+                            <!-- Lane name inputs will be dynamically added here -->
+                        </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button id="saveSettingsBtn" class="btn btn-primary">Save</button>
                     <button id="cancelSettingsBtn" class="btn btn-secondary">Cancel</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Lane Configuration Modal -->
-        <div id="laneConfigModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Configure Lanes</h2>
-                    <button class="modal-close" id="closeLaneConfigBtn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="setting-group">
-                        <label for="laneCountInput" class="setting-label">Number of Lanes:</label>
-                        <input 
-                            type="number" 
-                            id="laneCountInput" 
-                            class="setting-input" 
-                            min="1" 
-                            max="50"
-                            value="1"
-                        >
-                    </div>
-                    <div id="laneNamesContainer" class="lane-names-container">
-                        <!-- Lane name inputs will be dynamically added here -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="saveLaneConfigBtn" class="btn btn-primary">Save</button>
-                    <button id="cancelLaneConfigBtn" class="btn btn-secondary">Cancel</button>
                 </div>
             </div>
         </div>
