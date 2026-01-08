@@ -12,7 +12,7 @@ A comprehensive web application for tracking time limits on gun range lanes with
   - 🟢 Green border when active
   - 🟠 Orange border when time is running low (5 minutes or less)
   - 🔴 Red border and pulsing animation when time has expired
-  - ⏸️ Paused state with preserved remaining time
+  - 🔵 Paused state with preserved remaining time
   - ⚪ Not started state
 
 ### Timer Controls
